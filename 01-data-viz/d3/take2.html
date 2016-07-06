@@ -1,0 +1,133 @@
+<!-- https://bl.ocks.org/mbostock/1305111 -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+  body {
+    text-align: center;
+  }
+  .arc_text {
+        font: 10px sans-serif;
+        text-anchor: middle;
+        fill:#000;
+      }
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+  // Define the data as a two-dimensional array of numbers. If you had other
+  // data to associate with each number, replace each number with an object, e.g.,
+  // `{key: "value"}`.
+  // var data = [
+  //   [11975,  5871, 8916, 2868],
+  //   [ 1951, 10048, 2060, 6171],
+  //   [ 8010, 16145, 8090, 8045],
+  //   [ 1013,   990,  940, 6907]
+  // ];
+
+  // Define the margin, radius, and color scale. The color scale will be
+  // assigned by index, but if you define your data using objects, you could pass
+  // in a named field from the data object instead, such as `d.name`. Colors
+  // are assigned lazily, so if you want deterministic behavior, define a domain
+  // for the color scale.
+  var m = 10,
+      r = 100,
+      z = d3.scale.category20c();
+
+  var responses = [ "No Opinion", "No Interest", "Eh", "Very Interested" ];
+
+  // Insert an svg element (with margin) for each row in our dataset. A child g
+  // element translates the origin to the pie center.
+  //var svg = d3.select("body")//.append("svg")
+      //.attr("width", 800)
+      //.attr("height", 800);
+
+  var pie = d3.layout.pie()
+        //.sort(null)
+        .value(function(d) { 
+          console.log(d);
+          var vals = d.value;
+          // var vals = [];
+          // vals.push(parseInt(d["No Opinion"]));
+          // vals.push(parseInt(d["No Interest"]));
+          // vals.push(parseInt(d["Eh"]));
+          // vals.push(parseInt(d["Very Interested"]));
+          // console.log(vals);
+          return vals; 
+        });
+
+  var labelArc = d3.svg.arc()
+        .outerRadius(100 - 40)
+        .innerRadius(100 - 40); 
+
+  // The data for each svg element is a row of numbers (an array). We pass that to
+  // d3.layout.pie to compute the angles for each arc. These start and end angles
+  // are passed to d3.svg.arc to draw arcs! Note that the arc radius is specified
+  // on the arc, not the layout.
+  d3.csv("new_data.csv", function(error, o_data){
+    if(error) throw error;
+    var data = [];
+    data = [
+      [11975,  5871, 8916, 2868],
+      [ 1951, 10048, 2060, 6171],
+      [ 8010, 16145, 8090, 8045],
+      [ 1013,   990,  940, 6907]
+    ];
+    data = o_data.map(function(d){
+      var vals = [];
+      //vals.push(d["Topic"]);
+      vals.push(parseInt(d["No Opinion"]));
+      vals.push(parseInt(d["No Interest"]));
+      vals.push(parseInt(d["Eh"]));
+      vals.push(parseInt(d["Very Interested"]));
+      console.log(vals);
+      return vals; 
+    });
+    for (i in data){
+      console.log(i);
+      //data.push();
+    }
+    console.log(o_data);
+    console.log(data);
+
+    var svg=d3.select("body").selectAll("svg").data(data)
+      .enter().append("svg")
+        .attr("width", (r + m) * 2)
+        .attr("height", (r + m) * 2)
+      .append("g")
+        .attr("transform", "translate(" + (r + m) + "," + (r + m) + ")");
+
+    svg.selectAll("path")
+        //.data(pie(data))
+        .data(d3.layout.pie())
+      .enter().append("path")
+        .attr("d", d3.svg.arc()
+            .innerRadius(r / 2)
+            .outerRadius(r))
+        //.style("fill","none")
+        .style("fill", function(d, i) { 
+          console.log(d, i);
+          return z(i); 
+        })
+        
+        ;
+
+    svg.selectAll("g")
+    .append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d,i) { 
+            console.log(d,i);
+            if ( d.data.value != 0 ){
+              return ( responses[i] );
+            }
+            else return ""; 
+          });
+  });
+
+</script>

@@ -1,0 +1,345 @@
+<html>
+  <meta http-equiv="content-type" content="text/html; charset=UTF8">
+  <head>
+    <script type="text/javascript" src="d3.js"></script>
+    <style>
+      .arc_text {
+        font: 10px sans-serif;
+        text-anchor: middle;
+      }
+
+      .arc_title {
+        font: 20px sans-serif;
+        text-anchor: middle;
+      }
+
+      .arc path {
+        stroke: #fff;
+      }
+
+      .eh {
+        fill: rgb(255,0,0);
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+    //document.addEventListener("DOMContentLoaded", function(event) { 
+      console.log("ready");
+
+      var svg = d3.select("body").append("svg")
+        .attr("width", 800)
+        .attr("height", 800)
+        .append("g")
+        .attr("transform", "translate(" + 800 / 2 + "," + 800 / 2 + ")");
+
+      var choices = [ "No Opinion", "No Interest", "Eh", "Very Interested" ];
+
+      var arc = d3.svg.arc()
+        .outerRadius(function(d) { return d.value*20; })
+        .innerRadius(60);
+
+      var labelArc = d3.svg.arc()
+        .outerRadius(100 - 40)
+        .innerRadius(100 - 40);
+
+      //var colors = [ "#f00", "#f00", "#00f", "#0f0" ];
+      var colors = [ "#ff0000", "#a1dab4", "#41b6c4", "#225ea8" ];
+
+      var color = d3.scale.ordinal()
+        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+      var pie = d3.layout.pie()
+        .sort(null)
+        .value(function(d) { return d.value; });
+
+      var arduino = [];
+      var arduino_count = [{},{},{},{}];
+      var rpi = [];
+      var rpi_count = [{},{},{},{}];
+      var dviz = [];
+      var dviz_count = [{},{},{},{}];
+      var cv = [];
+      var cv_count = [{},{},{},{}];
+      var proj = [];
+      var proj_count = [{},{},{},{}];
+      var leds = [];
+      var leds_count = [{},{},{},{}];
+      var motors = [];
+      var motors_count = [{},{},{},{}];
+
+      d3.csv("data.csv", function(error, data){
+        if (error) throw error;
+
+        data.map(function(d){
+          arduino.push(d["Topics [Arduino ]"]);
+          rpi.push(d["Topics [Raspberry Pi]"]);
+          dviz.push(d["Topics [Data Viz]"]);
+          cv.push(d["Topics [Computer Vision]"]);
+          proj.push(d["Topics [Multi-Week Physical/Digital Project (Arduino+node+Web)]"]);
+          leds.push(d["Topics [LEDs (blinky blinky)]"]);
+          motors.push(d["Topics [Motors (servos, steppers)]"]);
+        });
+
+        var index = 0;
+        for ( j in choices ){
+          arduino_count[j].label = choices[j];
+          arduino_count[j].value = 0;
+          arduino_count[j].index = index;
+
+          rpi_count[j].label = choices[j];
+          rpi_count[j].value = 0;
+          rpi_count[j].index = index;
+
+          dviz_count[j].label = choices[j];
+          dviz_count[j].value = 0;
+          dviz_count[j].index = index;
+
+          cv_count[j].label = choices[j];
+          cv_count[j].value = 0;
+          cv_count[j].index = index;
+
+          proj_count[j].label = choices[j];
+          proj_count[j].value = 0;
+          proj_count[j].index = index;
+
+          leds_count[j].label = choices[j];
+          leds_count[j].value = 0;
+          leds_count[j].index = index;
+
+          motors_count[j].label = choices[j];
+          motors_count[j].value = 0;
+          motors_count[j].index = index;
+
+          index++;
+        }
+
+        for ( i in arduino ){
+
+          if ( arduino[i] === "" ) arduino[i] = "No Opinion";
+          if ( rpi[i] === "" ) rpi[i] = "No Opinion";
+          if ( dviz[i] === "" ) dviz[i] = "No Opinion";
+          if ( cv[i] === "" ) cv[i] = "No Opinion";
+          if ( proj[i] === "" ) proj[i] = "No Opinion";
+          if ( leds[i] === "" ) leds[i] = "No Opinion";
+          if ( motors[i] === "" ) motors[i] = "No Opinion";
+          
+          for ( j in choices ){
+            if ( arduino[i] === choices[j] ){
+              arduino_count[j].value++;
+            }
+            if ( rpi[i] === choices[j] ){
+              rpi_count[j].value++;
+            }
+            if ( dviz[i] === choices[j] ){
+              dviz_count[j].value++;
+            }
+            if ( cv[i] === choices[j] ) cv_count[j].value++;
+            if ( proj[i] === choices[j] ) proj_count[j].value++;
+            if ( leds[i] === choices[j] ) leds_count[j].value++;
+            if ( motors[i] === choices[j] ) motors_count[j].value++;
+            //if ( cv[i] === choices[j] ) cv_count[j].value++;
+          }
+          
+          // if ( arduino_count[ arduino[i] ] === undefined ) arduino_count[ arduino[i] ] = 0;
+          // arduino_count[ arduino[i] ]++;
+        }
+
+        var g = svg.selectAll(".arc")
+          .data(pie(arduino_count))
+          .enter().append("g")
+          .attr("transform", "translate(" + -100 + "," + -100 + ")")
+          .attr("class", "arc");
+
+        g.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { 
+            return colors[d.data.index]; 
+          })
+          .attr("title", function(d) { 
+            return colors[d.data.label]; 
+          })
+          ;
+        g.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d) { 
+            if ( d.data.value != 0 ){
+              return ( d.data.label + " : " + d.data.value );
+            }
+            else return ""; 
+          });
+        g.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + 0 + "," + -110 + ")"; 
+          })
+          .attr("class", "arc_title")
+          .text("Arduino")
+          ;
+
+
+        var g2 = svg.selectAll(".arc2")
+          .data(pie(rpi_count))
+          .enter().append("g")
+          .attr("transform", "translate(" + 100 + "," + -100 + ")")
+          .attr("class", "arc");
+
+        g2.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { 
+            return colors[d.data.index]; 
+          })
+          .attr("title", function(d) { 
+            return colors[d.data.label]; 
+          })
+          ;
+        g2.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d) { 
+            if ( d.data.value != 0 ){
+              return ( d.data.label + " : " + d.data.value );
+            }
+            else return ""; 
+          })
+        g2.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + 0 + "," + -110 + ")"; 
+          })
+          .attr("class", "arc_title")
+          .text("Raspberry Pi")
+          ;
+
+        var g3 = svg.selectAll(".arc3")
+          .data(pie(dviz_count))
+          .enter().append("g")
+          .attr("transform", "translate(" + 100 + "," + 100 + ")")
+          .attr("class", "arc");
+
+        g3.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { 
+            return colors[d.data.index]; 
+          })
+          .attr("title", function(d) { 
+            return colors[d.data.label]; 
+          })
+          ;
+        g3.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d) { 
+            if ( d.data.value != 0 ){
+              return ( d.data.label + " : " + d.data.value );
+            }
+            else return ""; 
+          })
+        g3.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + 0 + "," + 120 + ")"; 
+          })
+          .attr("class", "arc_title")
+          .text("Data Viz")
+          ;
+
+        var g4 = svg.selectAll(".arc4")
+          .data(pie(cv_count))
+          .enter().append("g")
+          .attr("transform", "translate(" + -100 + "," + 100 + ")")
+          .attr("class", "arc");
+
+        g4.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { 
+            return colors[d.data.index]; 
+          })
+          ;
+        g4.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d) { 
+            if ( d.data.value != 0 ){
+              return ( d.data.label + " : " + d.data.value );
+            }
+            else return ""; 
+          })
+        g4.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + 0 + "," + 120 + ")"; 
+          })
+          .text("Computer Vision")
+          .attr("font-size", "50px")
+          .attr("class", "arc_title")
+          ;
+
+
+
+        var g5 = svg.selectAll(".arc5")
+          .data(pie(proj_count))
+          .enter().append("g")
+          .attr("transform", "translate(" + -300 + "," + 100 + ")")
+          .attr("class", "arc");
+
+        g5.append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { 
+            return colors[d.data.index]; 
+          })
+          ;
+        g5.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + labelArc.centroid(d) + ")"; 
+          })
+          .attr("dy", ".35em")
+          .attr("class", "arc_text")
+          .text(function(d) { 
+            if ( d.data.value != 0 ){
+              return ( d.data.label + " : " + d.data.value );
+            }
+            else return ""; 
+          })
+        g5.append("text")
+          .attr("transform", function(d) { 
+            return "translate(" + 0 + "," + 120 + ")"; 
+          })
+          .text("Project")
+          .attr("font-size", "50px")
+          .attr("class", "arc_title")
+          ;
+
+        // g2.append("rect")
+        //   .attr("width", 50)
+        //   .attr("y", 50)
+        //   .attr("height", function(d){
+        //     console.log('working')
+        //     return d.value*10;
+        //   })
+        //   .style("fill", function(d) { 
+        //     return colors[d.index]; 
+        //  });
+
+        // d3.select("body").selectAll("p")
+        //   .data(arduino_count)
+        //   .enter()
+        //   .append("p")
+        //   .text( function(d){ return d.label; } );
+
+        // console.log(d3.selectAll("p"));
+      });
+      //console.log(csv);
+      //});
+    </script>
+  </body>
+</html>
